@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <set>
+#include <stack>
 
 const int SIZE = 4;
 const int MIN_LEN = 4;
@@ -55,29 +56,37 @@ std::vector<std::pair<int, int>> gen_all_points() {
     return result;
 }
 
-int choose_next_point(std::set<std::pair<int, int>>& used_points, std::pair<int, int> last_point) {
+struct Call {
+    std::set<std::pair<int, int>> used_points;
+    std::pair<int, int> last_point;
+};
+
+int choose_next_point(std::stack<Call> &s, Call c) {
     int found_possibilities = 0;
 
-    if (used_points.size() >= MIN_LEN) {
+    if (c.used_points.size() >= MIN_LEN) {
         found_possibilities += 1;
-        if (used_points.size() == MAX_LEN) {
+        if (c.used_points.size() == MAX_LEN) {
             return found_possibilities;
         }
     }
 
     for (const auto& p : gen_all_points()) {
-        if(!used_points.contains(p)) {
+        if(!c.used_points.contains(p)) {
             bool valid = true;
-            for (const auto& between_p : get_inbetween_points(last_point, p)) {
-                if(!used_points.contains(between_p)) {
+            for (const auto& between_p : get_inbetween_points(c.last_point, p)) {
+                if(!c.used_points.contains(between_p)) {
                     valid = false;
                     break;
                 }
             }
             if (valid) {
-                std::set<std::pair<int, int>> used_points_copy = used_points;
-                used_points_copy.insert(p);
-                found_possibilities += choose_next_point(used_points_copy, p);
+                Call newCall = {
+                    .used_points = c.used_points, // copied
+                    .last_point = p,
+                };
+                newCall.used_points.insert(p);
+                s.emplace(newCall);
             }
         }
     }
@@ -89,10 +98,20 @@ int main() {
     int total = 0;
 
     for (const auto& p : gen_all_points()) {
-        auto a = to_number_0(p);
-        std::cout << "Starting start point (" << p.first << ", " << p.second << ") (" << a << ")" << std::endl;
-        std::set<std::pair<int, int>> used_points = {p};
-        total += choose_next_point(used_points, p);
+        std::cout << "Starting start point (" << p.first << ", " << p.second << ")" << std::endl;
+
+        std::stack<Call> s;
+        Call c;
+        c.used_points = {p};
+        c.last_point = p;
+        s.emplace(c);
+
+        while(s.size() > 0) {
+            Call newCall = s.top();
+            s.pop();
+            total += choose_next_point(s, newCall);
+        }
+
         std::cout << "Finished start point (" << p.first << ", " << p.second << ")" << std::endl;
     }
 
