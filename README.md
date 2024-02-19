@@ -1,7 +1,7 @@
 # Perf
 `perf record -F max --call-graph dwarf,64000 -g -- ./attempt7_cpp`
 
-`perf script | stackcollapse-perf.pl | flamegraph.pl > test.svg `
+`perf script | stackcollapse-perf.pl | flamegraph.pl > test.svg`
 
 # WallClockProfiler (wcp)
 
